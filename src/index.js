@@ -33,8 +33,19 @@ app.post('/simulate-upload', async (req, res) => {
   const count = parseInt(req.body?.count ?? 1, 10);
   try {
     const client = await getLdClient();
-    const results = await runUploadBatch(count, client);
-    res.json({ success: true, processed: results.length, results });
+    const { results, errors } = await runUploadBatch(
+      count,
+      client,
+      (err) => Sentry.captureException(err)
+    );
+    const status = errors.length > 0 ? 207 : 200;
+    res.status(status).json({
+      success: errors.length === 0,
+      processed: results.length,
+      failed: errors.length,
+      results,
+      errors,
+    });
   } catch (err) {
     Sentry.captureException(err);
     res.status(500).json({ success: false, error: err.message });
