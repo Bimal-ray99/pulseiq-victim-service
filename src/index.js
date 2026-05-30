@@ -14,7 +14,6 @@ Sentry.init({
 
 const app = express();
 app.use(express.json());
-app.use(Sentry.Handlers.requestHandler());
 
 let ldClient;
 async function getLdClient() {
@@ -52,7 +51,6 @@ app.post('/simulate-upload', async (req, res) => {
   }
 });
 
-app.use(Sentry.Handlers.errorHandler());
 
 const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => {
