@@ -2,14 +2,13 @@
   "name": "pulseiq-victim-service",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Rahulstark2/pulseiq-victim-service.git"
+    "url": "git+https://github.com/Bimal-ray99/pulseiq-victim-service.git"
   },
   "keywords": [],
   "author": "",
