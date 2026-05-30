@@ -36,7 +36,7 @@ async function runUploadBatch(count, ldClient, captureError) {
     try {
       if (useNewFlow) {
         const upload = processUploadV2(i);
-        // BUG: no null-check — TypeError: Cannot read properties of null
+        if (!upload) throw new Error('Upload stream returned null — file may exceed size limit');
         results.push({
           index: i,
           fileId: upload.fileId,
