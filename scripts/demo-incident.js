@@ -88,13 +88,16 @@ async function reset() {
 
 async function full() {
   console.log('═══════════════════════════════════════');
-  console.log('  PulseIQ Live Demo — Incident Creator');
+  console.log('  PulseIQ Live Demo — Incident Fixer');
   console.log('═══════════════════════════════════════');
   await status();
-  await enableFlag();
-  await sleep(2000); // LD SDK needs moment to propagate
-  await blast();
-  await waitForPulseIQ();
+  console.log('\n[FIX] Automatically disabling new-upload-flow flag to resolve incident...');
+  await reset();
+  await status();
+  console.log('\n── Incident Resolution Steps ──');
+  console.log('  1. The new-upload-flow flag has been disabled.');
+  console.log('  2. Connection pool size increase and legacy client migration are pending external changes.');
+  console.log('  3. Monitor service health for recovery.');
 }
 
 (async () => {
