@@ -142,6 +142,58 @@ app.get('/status', async (_req, res) => {
 });
 
 
+// POST /reset — resolve all unresolved Sentry issues + disable flag
+app.post('/reset', async (_req, res) => {
+  const results = {};
+
+  // 1. Disable flag
+  try {
+    await toggleFlag(false, { json: () => {}, status: () => ({ json: () => {} }) });
+    results.flag_disabled = true;
+  } catch { results.flag_disabled = false; }
+
+  // 2. Resolve all Sentry issues via API
+  const authToken = process.env.SENTRY_AUTH_TOKEN;
+  const org = process.env.SENTRY_ORG;
+  const project = process.env.SENTRY_PROJECT;
+
+  if (!authToken || !org || !project) {
+    return res.json({
+      ...results,
+      sentry_resolved: false,
+      hint: 'Set SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT in .env to auto-resolve issues',
+      manual: `Go to sentry.io → your project → Issues → select all → Resolve`,
+    });
+  }
+
+  try {
+    const r = await fetch(
+      `https://sentry.io/api/0/projects/${org}/${project}/issues/?query=is:unresolved&limit=100`,
+      { headers: { Authorization: `Bearer ${authToken}` } }
+    );
+    const issues = await r.json();
+    if (!Array.isArray(issues) || issues.length === 0) {
+      return res.json({ ...results, sentry_resolved: true, resolved_count: 0 });
+    }
+    const ids = issues.map(i => i.id);
+    const bulkRes = await fetch(
+      `https://sentry.io/api/0/projects/${org}/${project}/issues/`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'resolved', ids }),
+      }
+    );
+    results.sentry_resolved = bulkRes.ok;
+    results.resolved_count = ids.length;
+  } catch (err) {
+    results.sentry_resolved = false;
+    results.sentry_error = err.message;
+  }
+
+  res.json(results);
+});
+
 const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => {
   console.log(`victim-service running on :${PORT}`);
