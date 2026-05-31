@@ -35,7 +35,14 @@ app.post('/simulate-upload', async (req, res) => {
     const { results, errors } = await runUploadBatch(
       count,
       client,
-      (err) => Sentry.captureException(err)
+      (err) => {
+        Sentry.withScope((scope) => {
+          scope.setFingerprint(['upload-pipeline-failure', 'new-upload-flow']);
+          scope.setTag('flag', 'new-upload-flow');
+          scope.setTag('error_type', err.name || 'Error');
+          Sentry.captureException(err);
+        });
+      }
     );
     const status = errors.length > 0 ? 207 : 200;
     res.status(status).json({
@@ -62,7 +69,17 @@ app.post('/blast', async (req, res) => {
       client,
       (err) => {
         console.error('[blast] captured:', err.message);
-        Sentry.captureException(err);
+        Sentry.withScope((scope) => {
+          // Fingerprint all upload pipeline errors as ONE Sentry issue
+          scope.setFingerprint(['upload-pipeline-failure', 'new-upload-flow']);
+          scope.setTag('flag', 'new-upload-flow');
+          scope.setTag('error_type', err.name || 'Error');
+          scope.setContext('upload_pipeline', {
+            error_class: err.name,
+            flag_enabled: true,
+          });
+          Sentry.captureException(err);
+        });
       }
     );
     console.log(`[blast] done — ${results.length} ok, ${errors.length} errors`);
