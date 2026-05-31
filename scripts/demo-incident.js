@@ -54,26 +54,27 @@ async function enableFlag() {
 }
 
 async function blast(count = BLAST_COUNT) {
-  console.log(`\n[2/3] Firing ${count} uploads → flooding Sentry with TypeErrors...`);
+  console.log(`\n[2/3] Firing ${count} uploads → expecting errors if new-upload-flow is ON, else successful...`);
   const r = await post('/blast', { count });
   console.log(`  ✓ Blasted: ${r.blasted} uploads`);
   console.log(`  ✓ Errors captured to Sentry: ${r.errors_captured}`);
   console.log(`  ✓ Successful (legacy flow): ${r.processed}`);
   if (r.errors_captured === 0) {
-    console.log('\n  ⚠️  Zero errors — flag may still be OFF or LD not connected');
+    console.log('\n  ✅ Zero errors — new-upload-flow may be OFF or incident is fixed.');
   }
 }
 
 async function waitForPulseIQ() {
-  console.log('\n[3/3] Waiting 5s for Sentry to ingest errors...');
+  console.log('\n[3/3] Waiting 5s for Sentry to ingest errors (if any were generated)...');
   await sleep(5000);
-  console.log('  ✓ Errors should now appear in Sentry');
+  console.log('  ✓ Errors should now appear in Sentry (if new-upload-flow was ON)');
   console.log('  ✓ PulseIQ Coral queries will pick them up in next poll');
   console.log('\n── What to do now ──');
-  console.log('  1. Open PulseIQ → Coral Activity Log should show sentry queries');
-  console.log('  2. Org Pulse Feed → should show live critical alerts');
-  console.log('  3. Click an incident → Ask "Why are uploads failing?"');
-  console.log('  4. Enable Autopilot → watch auto-remediation fire');
+  console.log('  1. Open PulseIQ → Coral Activity Log should show sentry queries (if errors)');
+  console.log('  2. Org Pulse Feed → should show live critical alerts (if errors)');
+  console.log('  3. Click an incident → Ask "Why are uploads failing?" (if errors)');
+  console.log('  4. Enable Autopilot → watch auto-remediation fire (if errors)');
+  console.log('\n  To re-create the incident, run `node scripts/demo-incident.js enable` then `node scripts/demo-incident.js blast`.');
 }
 
 async function reset() {
@@ -91,7 +92,7 @@ async function full() {
   console.log('  PulseIQ Live Demo — Incident Creator');
   console.log('═══════════════════════════════════════');
   await status();
-  await enableFlag();
+  console.log('\n[1/3] Skipping flag enable (incident fixed). Run `node scripts/demo-incident.js enable` to re-enable.');
   await sleep(2000); // LD SDK needs moment to propagate
   await blast();
   await waitForPulseIQ();
