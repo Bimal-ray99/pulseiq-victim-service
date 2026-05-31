@@ -87,9 +87,9 @@ async function reset() {
 }
 
 async function full() {
-  console.log('═══════════════════════════════════════');
+  console.log('═════════════════════════════════════');
   console.log('  PulseIQ Live Demo — Incident Creator');
-  console.log('═══════════════════════════════════════');
+  console.log('═════════════════════════════════════');
   await status();
   await enableFlag();
   await sleep(2000); // LD SDK needs moment to propagate
