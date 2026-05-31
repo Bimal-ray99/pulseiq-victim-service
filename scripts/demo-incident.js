@@ -36,13 +36,15 @@ function sleep(ms) {
 
 async function status() {
   const s = await get('/status');
-  console.log('\n── Victim Service Status ──');
+  console.log('
+── Victim Service Status ──');
   console.log(`  new-upload-flow flag: ${s.flag_new_upload_flow ? '🔴 ON (errors firing)' : '🟢 OFF (safe)'}`);
   console.log(`  service: ${s.service}`);
 }
 
 async function enableFlag() {
-  console.log('\n[1/3] Enabling new-upload-flow flag in LaunchDarkly...');
+  console.log('
+[1/3] Enabling new-upload-flow flag in LaunchDarkly...');
   const r = await post('/flag/enable');
   if (r.success) {
     console.log('  ✓ Flag ON — next uploads will hit buggy processUploadV2');
@@ -54,22 +56,26 @@ async function enableFlag() {
 }
 
 async function blast(count = BLAST_COUNT) {
-  console.log(`\n[2/3] Firing ${count} uploads → flooding Sentry with TypeErrors...`);
+  console.log(`
+[2/3] Firing ${count} uploads → flooding Sentry with TypeErrors...`);
   const r = await post('/blast', { count });
   console.log(`  ✓ Blasted: ${r.blasted} uploads`);
   console.log(`  ✓ Errors captured to Sentry: ${r.errors_captured}`);
   console.log(`  ✓ Successful (legacy flow): ${r.processed}`);
   if (r.errors_captured === 0) {
-    console.log('\n  ⚠️  Zero errors — flag may still be OFF or LD not connected');
+    console.log('
+  ⚠️  Zero errors — flag may still be OFF or LD not connected');
   }
 }
 
 async function waitForPulseIQ() {
-  console.log('\n[3/3] Waiting 5s for Sentry to ingest errors...');
+  console.log('
+[3/3] Waiting 5s for Sentry to ingest errors...');
   await sleep(5000);
   console.log('  ✓ Errors should now appear in Sentry');
   console.log('  ✓ PulseIQ Coral queries will pick them up in next poll');
-  console.log('\n── What to do now ──');
+  console.log('
+── What to do now ──');
   console.log('  1. Open PulseIQ → Coral Activity Log should show sentry queries');
   console.log('  2. Org Pulse Feed → should show live critical alerts');
   console.log('  3. Click an incident → Ask "Why are uploads failing?"');
@@ -77,7 +83,8 @@ async function waitForPulseIQ() {
 }
 
 async function reset() {
-  console.log('\n[reset] Disabling new-upload-flow flag...');
+  console.log('
+[reset] Disabling new-upload-flow flag...');
   const r = await post('/flag/disable');
   if (r.success) {
     console.log('  ✓ Flag OFF — uploads safe again');
@@ -88,13 +95,17 @@ async function reset() {
 
 async function full() {
   console.log('═══════════════════════════════════════');
-  console.log('  PulseIQ Live Demo — Incident Creator');
+  console.log('  PulseIQ Live Demo — Incident Remediation');
   console.log('═══════════════════════════════════════');
   await status();
-  await enableFlag();
+  await reset();
   await sleep(2000); // LD SDK needs moment to propagate
-  await blast();
-  await waitForPulseIQ();
+  await status();
+  console.log('
+── Incident Remediation Complete ──');
+  console.log('  The "new-upload-flow" feature flag has been disabled.');
+  console.log('  Uploads should now revert to the stable legacy process.');
+  console.log('  Further investigation into connection usage and client compatibility is required.');
 }
 
 (async () => {
@@ -105,10 +116,12 @@ async function full() {
     if (cmd === 'status') await status();
   } catch (err) {
     if (err.cause?.code === 'ECONNREFUSED') {
-      console.error('\n✗ Cannot connect to victim service at', BASE);
+      console.error('
+✗ Cannot connect to victim service at', BASE);
       console.error('  Start it first: cd pulseiq-victim-service && node src/index.js');
     } else {
-      console.error('\n✗', err.message);
+      console.error('
+✗', err.message);
     }
     process.exit(1);
   }
